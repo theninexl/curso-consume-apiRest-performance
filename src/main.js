@@ -39,6 +39,9 @@ const createMovies = (movies, container, lazyLoad = false) =>{
             lazyLoad ? 'data-src' : 'src',
             `https://image.tmdb.org/t/p/w300/${movie.poster_path}
         `);
+        movieImg.addEventListener('error',() =>{
+            movieImg.setAttribute('src', 'https://img.freepik.com/vector-gratis/pagina-error-404-distorsion_23-2148105404.jpg?w=996&t=st=1681841588~exp=1681842188~hmac=8a00549fc481b001f1db153d657e0a0357a4ea3745a0d1d2166a9819cb47c634')
+        });
 
         if (lazyLoad) {
             lazyLoader.observe(movieImg);
@@ -109,7 +112,7 @@ const getMoviesByCategory = async (id,name) => {
         }
     });
     const movies = data.results;       
-    createMovies(movies,genericSection);
+    createMovies(movies,genericSection,true);
 }
 
 const getMoviesBySearch = async (query) => {
