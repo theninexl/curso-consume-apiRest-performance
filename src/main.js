@@ -14,7 +14,7 @@ const api = axios.create({
 //lazyLoader necesita dos argumentos: callback(función) y options, y en options especificar el root que estás observando, en este caso no enviamos opciones porque vamos a observar el total del documento html (debería haber un pequeño observer por cada contenedor que necesites observar, no el total del documento.)
 const lazyLoader = new IntersectionObserver((entries) => {
     entries.forEach((entry)=>{
-        console.log(entry)
+        //console.log(entry)
         const url = entry.target.getAttribute('data-src');
         if (entry.isIntersecting === true) {
             entry.target.setAttribute('src',url);
@@ -23,8 +23,17 @@ const lazyLoader = new IntersectionObserver((entries) => {
     });
 });
 
-const createMovies = (movies, container, lazyLoad = false) =>{
-    container.innerHTML = '';
+const createMovies = (
+    movies, 
+    container, 
+    { 
+        lazyLoad = false, 
+        clean = true 
+    } = {},
+    ) =>{
+    if (clean) {
+        container.innerHTML = '';
+    }
 
     movies.forEach(movie => {        
         const movieContainer = document.createElement('div');
@@ -89,7 +98,7 @@ const getTrendingMoviesPreview = async () => {
     const { data } = await api('trending/movie/day');
     const movies = data.results;
     //console.log(movies);
-    createMovies(movies,trendingMoviesPreviewList, true);
+    createMovies(movies,trendingMoviesPreviewList);
 }
 
 const getTrendingCategoriesPreview = async () => {
@@ -112,7 +121,7 @@ const getMoviesByCategory = async (id,name) => {
         }
     });
     const movies = data.results;       
-    createMovies(movies,genericSection,true);
+    createMovies(movies,genericSection,{lazyLoad:true, clean:true});
 }
 
 const getMoviesBySearch = async (query) => {
@@ -128,8 +137,41 @@ const getMoviesBySearch = async (query) => {
 const getTrendingMovies = async () => {
     const { data } = await api('trending/movie/day');
     const movies = data.results;
-    createMovies(movies,genericSection);
+    createMovies(movies,genericSection, {lazyLoad:true, clean:true});
+
+    const btnLoadMore = document.createElement('button');
+    //btnLoadMore.innerText = 'Cargar más';
+    //btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
+    //genericSection.appendChild(btnLoadMore);
 }
+
+const getPaginatedTrendingMovies = async () => {
+    console.log("paginated");
+    //nos guardamos las propiedades que necesitamos de document.documentElement
+    //scrollTop: la cantidad de scroll que hemos hecho
+    //scorllHeight: la cantidad total de scroll posible en el documento
+    //clientHeight: la altura de la ventana
+    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+    //creamos una constante que nos diga si hemos alcanzado el final del scroll posible. El -15 es para asegurarlo aunque estés a 15px de alcanzarlo.
+    const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+
+    if (scrollIsBottom) {
+        console.log("scroll is bottom");
+        page++;
+        const { data } = await api('trending/movie/day', {
+            params: {
+                page: page,
+            },
+        });
+        const movies = data.results;
+        createMovies(movies,genericSection,{lazyLoad:true, clean:false});
+        //const btnLoadMore = document.createElement('button');
+        //btnLoadMore.innerText = 'Cargar más';
+        //btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
+        //genericSection.appendChild(btnLoadMore);
+    }    
+}
+
 
 const getMovieById = async (id) => {
     const { data: movie } = await api(`movie/${id}`);

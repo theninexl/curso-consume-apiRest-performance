@@ -1,3 +1,6 @@
+let page = 1;
+let infiniteScroll;
+
 searchFormBtn.addEventListener('click', () =>{
     
     location.hash='#search='+searchFormInput.value;
@@ -14,38 +17,32 @@ arrowBtn.addEventListener('click', () =>{
 
 const navigator = () => {
     console.log({location});
-
-    const HASHES = {
-        '#trends':() => trendsPage(),
-        '#search=':() => searchPage(),
-        '#movie=':() => movieDetailsPage(),
-        '#category=':() => categoriesPage()
-    };
-
-    for (const KEY of Object.keys(HASHES)) {
-        if (location.hash.startsWith(KEY)){
-            HASHES[KEY]();
-            return;
-        }
+        
+    if (infiniteScroll) {
+        window.removeEventListener('scroll', infiniteScroll, {passive: false});
+        infiniteScroll = undefined;
     }
-    homePage();
+
+    if (location.hash.startsWith('#trends')){
+        trendsPage();
+    } else if (location.hash.startsWith('#search=')) {
+        searchPage();
+    } else if (location.hash.startsWith('#movie=')) {
+        movieDetailsPage();
+    } else if (location.hash.startsWith('#category=')) {
+        categoriesPage();
+    } else {
+        homePage();
+    }
+    
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
+
+    if (infiniteScroll){
+        window.addEventListener('scroll', infiniteScroll,  {passive: false});
+    }
     
 }
-
-   /*if (location.hash.startsWith('#trends')) {
-    trendsPage();
-   } else if (location.hash.startsWith('#search=')) {
-    searchPage();
-   }else if (location.hash.startsWith('#movie=')) {
-    movieDetailsPage();
-   }else if (location.hash.startsWith('#category=')) {
-    categoriesPage();
-   }else {
-    homePage();    
-   }
-}*/
 
 const homePage = () => {
     console.log('home');
@@ -131,7 +128,7 @@ const searchPage = () => {
 }
 
 const trendsPage = () => {
-    console.log('Trends');
+    console.log('Trends!');
 
     headerSection.classList.remove('header-container--long');
     headerSection.style.background = '';
@@ -149,7 +146,11 @@ const trendsPage = () => {
     headerCategoryTitle.innerHTML = 'Tendencias';
 
     getTrendingMovies();
+
+    infiniteScroll = getPaginatedTrendingMovies;
 }
 
 window.addEventListener('DOMContentLoaded', navigator, false);
 window.addEventListener('hashchange', navigator, false);
+window.addEventListener('scroll', infiniteScroll, false, {passive: false});
+
