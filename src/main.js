@@ -120,8 +120,29 @@ const getMoviesByCategory = async (id,name) => {
             with_genres: id,
         }
     });
-    const movies = data.results;       
+    const movies = data.results;
+    maxPages = data.total_pages;
     createMovies(movies,genericSection,{lazyLoad:true, clean:true});
+}
+
+const getMoviesByCategoryPaginated = (id) => {
+    return async function () {
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+        const pageIsNotMax = page < maxPages;
+        if (scrollIsBottom && pageIsNotMax) {
+            page++;
+            const { data } = await api('discover/movie',{
+                params:{
+                    with_genres: id,
+                    page
+                }
+            });
+            const movies = data.results;
+            console.log(data);
+            createMovies(movies,genericSection,{lazyLoad:true, clean:false});
+        } 
+    }
 }
 
 const getMoviesBySearch = async (query) => {
@@ -130,16 +151,55 @@ const getMoviesBySearch = async (query) => {
             query: query,
         }
     });
-    const movies = data.results;       
-    createMovies(movies,genericSection);
+    const movies = data.results;
+    maxPages = data.total_pages;
+    createMovies(movies,genericSection, {lazyLoad:true, clean:true});
+
+    //const btnLoadMore = document.createElement('button');
+    //btnLoadMore.innerText = 'Cargar más';
+    //btnLoadMore.addEventListener('click', getMoviesBySearchPaginated);
+    //genericSection.appendChild(btnLoadMore);
+}
+
+//esta función no es asíncrona porque al llamarse desde navigation usando el parametro entre paréntesis en realidad la estás ejecutando, en vez de asignarla al evento de infiniteScroll. Con lo que solo la llamas una sola vez, y no puede calcular todo el rato el scroll, y si se acerca al final, etc, y hacer el consecuente llamado, etc
+//al dejar esta función como normal pero meterle dentro del return otra función lo que estás haciendo es un "closure": devolver como resultado de una función otra función, porque ahora si infiniteScroll si que recibe como resultado la necesidad de ejecutar todo el rato la segunda función.
+//para comprobarlo basta con descomentar todos los console.log y poner la primera función como asíncrona. 
+
+const getMoviesBySearchPaginated = (query) => {
+    //console.log("search paginated 1");
+    //const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+    //const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+    //console.log("scrolltop:"+scrollTop);
+    //console.log("scrollisBottom:"+scrollIsBottom);
+    return async function () {
+        //console.log("search paginated 2");
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+
+        const pageIsNotMax = page < maxPages;
+
+        if (scrollIsBottom && pageIsNotMax) {
+            console.log("scroll is bottom");
+            page++;
+            const { data } = await api('search/movie',{
+                params:{
+                    query,
+                    page,
+                }
+            });
+            const movies = data.results;
+            createMovies(movies,genericSection,{lazyLoad:true, clean:false});
+        } 
+    }
 }
 
 const getTrendingMovies = async () => {
     const { data } = await api('trending/movie/day');
     const movies = data.results;
     createMovies(movies,genericSection, {lazyLoad:true, clean:true});
+    maxPages = data.total_pages;
 
-    const btnLoadMore = document.createElement('button');
+    //const btnLoadMore = document.createElement('button');
     //btnLoadMore.innerText = 'Cargar más';
     //btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
     //genericSection.appendChild(btnLoadMore);
@@ -155,7 +215,9 @@ const getPaginatedTrendingMovies = async () => {
     //creamos una constante que nos diga si hemos alcanzado el final del scroll posible. El -15 es para asegurarlo aunque estés a 15px de alcanzarlo.
     const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
 
-    if (scrollIsBottom) {
+    const pageIsNotMax = page < maxPages;
+
+    if (scrollIsBottom && pageIsNotMax) {
         console.log("scroll is bottom");
         page++;
         const { data } = await api('trending/movie/day', {

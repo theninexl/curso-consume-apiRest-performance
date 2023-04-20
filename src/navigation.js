@@ -1,4 +1,5 @@
 let page = 1;
+let maxPages;
 let infiniteScroll;
 
 searchFormBtn.addEventListener('click', () =>{
@@ -85,6 +86,8 @@ const categoriesPage = () => {
     const [categoryId,categoryName] = categoryData.split('-');
 
     getMoviesByCategory(categoryId,categoryName);
+
+    infiniteScroll = getMoviesByCategoryPaginated(categoryId);
 }
 
 const movieDetailsPage = () => {
@@ -121,10 +124,12 @@ const searchPage = () => {
     trendingPreviewSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
-    movieDetailSection.classList.remove('inactive');
+    movieDetailSection.classList.add('inactive');
 
     const [_,query] = location.hash.split('='); // ['#search','searchValue']
     getMoviesBySearch(query);
+
+    infiniteScroll = getMoviesBySearchPaginated(query);
 }
 
 const trendsPage = () => {
