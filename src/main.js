@@ -1,15 +1,52 @@
 //import { API_KEY } from "./secrets.js";
+
+// Data 
+let language = window.navigator.language;
+
 const api = axios.create({
     baseURL: 'https://api.themoviedb.org/3/',
     headers: {
         'Content-Type': 'application/json;charset=utf-8'
     },
     params: {
-        'api_key': API_KEY
+        'api_key': API_KEY,
+        'language': language
     }
 });
 
-//helpers(utils)
+function likedMoviesList() {
+    let movies;
+    const item = JSON.parse(localStorage.getItem('liked_movies'));    
+
+    if (item) {
+        movies = item;
+    } else {
+        movies = {}
+    }
+    return movies;
+}
+
+const likeMovie = (movie) => {
+    //console.log('estas pulsando el boton de like de:'+movie.id);
+    const likedMovies = likedMoviesList();
+
+    console.log(likedMovies);
+
+    if (likedMovies[movie.id]) {
+        //console.log("la pelicula está en localStorage. Hay que eliminarla")
+        //quitarla de localStorage
+        likedMovies[movie.id] = undefined;
+    } else {
+        //console.log("la pelicula no está en localStorage. Hay que añadirla")
+        //agregar la pelicula a localStorage
+        likedMovies[movie.id] = movie;        
+    }
+
+    localStorage.setItem('liked_movies', JSON.stringify(likedMovies));
+}
+
+
+// Utils
 
 //lazyLoader necesita dos argumentos: callback(función) y options, y en options especificar el root que estás observando, en este caso no enviamos opciones porque vamos a observar el total del documento html (debería haber un pequeño observer por cada contenedor que necesites observar, no el total del documento.)
 const lazyLoader = new IntersectionObserver((entries) => {
@@ -24,13 +61,15 @@ const lazyLoader = new IntersectionObserver((entries) => {
 });
 
 const createMovies = (
-    movies, 
-    container, 
-    { 
-        lazyLoad = false, 
-        clean = true 
-    } = {},
-    ) =>{
+        //argumentos
+        movies, 
+        container, 
+        { 
+            lazyLoad = false, 
+            clean = true 
+        } = {},
+    ) => {
+
     if (clean) {
         container.innerHTML = '';
     }
@@ -38,9 +77,6 @@ const createMovies = (
     movies.forEach(movie => {        
         const movieContainer = document.createElement('div');
         movieContainer.classList.add('movie-container');
-        movieContainer.addEventListener('click',() => {
-            location.hash = `#movie=${movie.id}`;
-        });
         const movieImg = document.createElement('img');
         movieImg.classList.add('movie-img');
         movieImg.setAttribute('alt',movie.title);
@@ -48,8 +84,24 @@ const createMovies = (
             lazyLoad ? 'data-src' : 'src',
             `https://image.tmdb.org/t/p/w300/${movie.poster_path}
         `);
+        movieImg.addEventListener('click',() => {
+            location.hash = `#movie=${movie.id}`;
+        });
         movieImg.addEventListener('error',() =>{
             movieImg.setAttribute('src', 'https://img.freepik.com/vector-gratis/pagina-error-404-distorsion_23-2148105404.jpg?w=996&t=st=1681841588~exp=1681842188~hmac=8a00549fc481b001f1db153d657e0a0357a4ea3745a0d1d2166a9819cb47c634')
+        });
+
+        const movieBtn = document.createElement('button');
+        movieBtn.classList.add('movie-btn');
+        
+        likedMoviesList()[movie.id] && movieBtn.classList.add('movie-btn--liked');
+
+        movieBtn.addEventListener('click',()=>{
+            movieBtn.classList.toggle('movie-btn--liked');
+            //agregar la pelicula a local_storage
+            likeMovie(movie);
+            //refrescar el listado de peliculas favoritas
+            getLikedMovies();
         });
 
         if (lazyLoad) {
@@ -57,6 +109,7 @@ const createMovies = (
         }
 
         movieContainer.appendChild(movieImg);
+        movieContainer.appendChild(movieBtn);
         container.appendChild(movieContainer);
     })
 }
@@ -267,6 +320,18 @@ const getRelatedMoviesById = async (id) => {
     console.log(relatedMovies);
 
     createMovies(relatedMovies, relatedMoviesContainer);
+}
+
+const getLikedMovies = () => {
+    const likedMovies = likedMoviesList();
+    //liked movies es un objeto, y hay que convertirlo en un array para poder llamar a createMovies, para rellenar el contenedor de películas favoritas
+    //es decir, hay que pasar de {keys: 'values', keys: 'values}
+    //a un array ['value1','value2']
+    const moviesArray = Object.values(likedMovies);
+
+    createMovies(moviesArray,likedMoviesListArticle, {lazyLoad:true, clean:true});
+
+    console.log(likedMovies);
 }
 
 

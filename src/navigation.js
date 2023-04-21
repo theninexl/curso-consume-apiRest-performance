@@ -2,6 +2,7 @@ let page = 1;
 let maxPages;
 let infiniteScroll;
 
+
 searchFormBtn.addEventListener('click', () =>{
     
     location.hash='#search='+searchFormInput.value;
@@ -59,9 +60,11 @@ const homePage = () => {
     categoriesPreviewSection.classList.remove('inactive');
     genericSection.classList.add('inactive');
     movieDetailSection.classList.add('inactive');
+    likedMoviesListContainer.classList.remove('inactive');
 
     getTrendingMoviesPreview();
     getTrendingCategoriesPreview();
+    getLikedMovies();
 }
 
 const categoriesPage = () => {
@@ -79,6 +82,7 @@ const categoriesPage = () => {
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
+    likedMoviesListContainer.classList.add('inactive');
 
     //al declarar la variable desestructuramos sus datos creando directamente el array que queremos de _ (la categoría no la necesitamos para nada y categoryData (que lo vamos a usar para pillar el id y poder cargar las películas más recientes por categoría). El método split separa los datos según el caracter que tu le des, en diferentes arrays.)
     const [_,categoryData] = location.hash.split('='); // ['category','id-name']
@@ -105,6 +109,7 @@ const movieDetailsPage = () => {
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.add('inactive');
     movieDetailSection.classList.remove('inactive');
+    likedMoviesListContainer.classList.add('inactive');
 
     const [_,movieId] = location.hash.split('='); // ['#movie','movieID']
     getMovieById(movieId);
@@ -125,6 +130,7 @@ const searchPage = () => {
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
+    likedMoviesListContainer.classList.add('inactive');
 
     const [_,query] = location.hash.split('='); // ['#search','searchValue']
     getMoviesBySearch(query);
@@ -142,11 +148,11 @@ const trendsPage = () => {
     headerCategoryTitle.classList.remove('inactive');
     headerTitle.classList.add('inactive');
     searchForm.classList.add('inactive');
-
     trendingPreviewSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
+    likedMoviesListContainer.classList.add('inactive');
 
     headerCategoryTitle.innerHTML = 'Tendencias';
 
